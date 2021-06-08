@@ -39,50 +39,43 @@ class IndexPage extends React.Component {
     return (
       <div className="root">
         <Head>
-          <meta charSet="utf-8"/>
-          <meta httpEquiv="X-UA-Compatible" content="IE=edge"/>
-          <meta name="viewport" content="width=device-width, initial-scale=1"/>
+          <meta charSet="utf-8" />
+          <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
           <title>Salesforce activity stream</title>
         </Head>
         <div>
-          <h1>{'Salesforce activity '}
+          <h1>{'SFS Feed '}
 
             <span className={classNames({
               "heart": true,
               "heartbeat": heartbeating
-              })}
+            })}
               title={heartbeatReason}>{'⚡️'}</span>
 
             <span className={classNames({
               "salesforce-stream": true,
               "salesforce-stream-online": heartbeating && salesforceStreamIsUp
-              })}
+            })}
               title={salesforceReason}>{'☁️'}
             </span>
           </h1>
         </div>
         <ul>
           <CSSTransitionGroup
-          transitionName="message"
-          transitionEnterTimeout={500}
-          transitionLeaveTimeout={500}>
+            transitionName="message"
+            transitionEnterTimeout={500}
+            transitionLeaveTimeout={500}>
 
-            {decendingMessageIds.map( id => {
+            {decendingMessageIds.map(id => {
               const message = this.state.messages[id];
               const [header, content, context] = getMessageParts(message);
               return <li
                 key={header.transactionKey}
-                style={header.changeType === 'GAP_UPDATE' ? { display: 'none'} : {}}>
-                <p>
-                  {(header.changeType || '(Typeless)').toLowerCase()} {' '}
-                  <strong>{context[`${header.entityName}Name`] || (Nameless)}</strong> {' '}
-                  {(header.entityName || '(nameless)').toLowerCase()}
-                  <br/>
-                  by {context.UserName || '(No commit user)'}{', '} 
-                    <span title={content.LastModifiedDate}>
-                      {this.timeAgo.format(Date.parse(content.LastModifiedDate)) || '(Dateless)'}
-                    </span>
-                </p>
+                style={header.changeType === 'GAP_UPDATE' ? { display: 'none' } : {}}>
+                  <p>
+                    {JSON.stringify(message)}
+                  </p>
               </li>;
             })}
 
@@ -94,9 +87,9 @@ class IndexPage extends React.Component {
             line-height: 1.33rem;
             margin-top: 8vh,
           }
-          @media (min-width: 800px) {
+          @media (max-width: 300px) {
             .root {
-              margin-left: 31vw;
+              margin-left: 11vw;
               margin-right: 11vw;
             }
           }
@@ -186,7 +179,7 @@ class IndexPage extends React.Component {
       this.eventSource.addEventListener("salesforce", event => {
         const message = JSON.parse(event.data);
         const [header] = getMessageParts(message);
-        const id = header.transactionKey || 'none';
+        const id = header.transactionKey || message.ChangeEventHeader.commitNumber || 'none';
         // Collect message IDs into a Set to dedupe
         this.state.messageIds.add(id);
         // Collect message contents by ID
@@ -217,7 +210,7 @@ class IndexPage extends React.Component {
 function getMessageParts(message) {
   const content = message.payload || {};
   const context = message.context || {};
-  const header  = content.ChangeEventHeader || {};
+  const header = content.ChangeEventHeader || {};
   return [header, content, context];
 }
 
